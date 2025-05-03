@@ -1,0 +1,708 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Media Downloader</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #cc0000;
+            --primary-hover: #990000;
+            --light-bg: #f9f9f9;
+            --border-color: #ddd;
+            --text-color: #333;
+            --light-text: #777;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --error-color: #dc3545;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="url"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(204,0,0,0.2);
+            outline: none;
+        }
+        
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .radio-group:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .radio-group input[type="radio"] {
+            margin-right: 6px;
+        }
+        
+        .radio-group label {
+            display: inline;
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 13px;
+            color: var(--light-text);
+        }
+        
+        /* Card for video preview */
+        .video-preview {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .video-preview .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .video-preview .thumbnail {
+            width: 120px;
+            height: 67px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        
+        .video-preview .video-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .video-preview .video-info {
+            font-size: 14px;
+            color: var(--light-text);
+            margin-top: 5px;
+        }
+        
+        /* Options area */
+        .options-area {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .format-selector {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .format-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .format-option:first-child {
+            margin-right: 10px;
+        }
+        
+        .format-option.active {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(204,0,0,0.2);
+        }
+        
+        .format-option .icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+        
+        .format-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        /* Video quality options */
+        #videoOptions {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .quality-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .quality-option {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background-color: var(--light-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .quality-option.active {
+            background-color: rgba(204,0,0,0.1);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .quality-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .help-text {
+            font-size: 13px;
+            color: var(--light-text);
+            margin-top: 10px;
+        }
+        
+        .help-text p {
+            margin: 5px 0;
+        }
+        
+        /* Loading animation */
+        .loader {
+            display: none;
+            margin: 30px auto;
+            text-align: center;
+        }
+        
+        .loader-animation {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(204,0,0,0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loader-text {
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        /* Status messages */
+        .status-message {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status-error {
+            background-color: #fdeaea;
+            border-left: 4px solid var(--error-color);
+            color: var(--error-color);
+        }
+        
+        .status-success {
+            background-color: #e8f5e9;
+            border-left: 4px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .status-warning {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--warning-color);
+            color: #856404;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+                border-radius: 8px;
+            }
+            
+            .format-selector {
+                flex-direction: column;
+            }
+            
+            .format-option:first-child {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .video-preview .preview-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .video-preview .thumbnail {
+                width: 100%;
+                height: auto;
+                max-height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-download"></i> Media Downloader</h1>
+        
+        <div id="statusMessage" class="status-message"></div>
+        
+        <form id="downloadForm">
+            <div class="form-group">
+                <label for="url">Video URL:</label>
+                <input type="url" id="url" name="url" placeholder="https://www.youtube.com/watch?v=..." required>
+                <div class="help-text">
+                    <p>Supported sites: YouTube, SoundCloud, Vimeo</p>
+                </div>
+            </div>
+            
+            <!-- Video preview will show here -->
+            <div id="videoPreview" class="video-preview">
+                <div class="preview-header">
+                    <img id="thumbnailImg" class="thumbnail" src="/api/placeholder/120/67" alt="Thumbnail">
+                    <div>
+                        <p id="videoTitle" class="video-title">Video Title</p>
+                        <div id="videoInfo" class="video-info"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="options-area">
+                <label>Select Format:</label>
+                <div class="format-selector">
+                    <div class="format-option active" id="audioOption">
+                        <input type="radio" id="audio" name="format" value="audio" checked>
+                        <div class="icon"><i class="fas fa-music"></i></div>
+                        <label for="audio">Audio (MP3)</label>
+                    </div>
+                    <div class="format-option" id="videoOption">
+                        <input type="radio" id="video" name="format" value="video">
+                        <div class="icon"><i class="fas fa-video"></i></div>
+                        <label for="video">Video (MP4)</label>
+                    </div>
+                </div>
+                
+                <!-- Video quality options -->
+                <div id="videoOptions">
+                    <label class="quality-title">Video Quality:</label>
+                    <div class="quality-selector">
+                        <div class="quality-option active" id="highQualityOption">
+                            <input type="radio" id="quality-high" name="quality" value="high" checked>
+                            <label for="quality-high">High Quality</label>
+                        </div>
+                        <div class="quality-option" id="balancedOption">
+                            <input type="radio" id="quality-balanced" name="quality" value="balanced">
+                            <label for="quality-balanced">Balanced</label>
+                        </div>
+                    </div>
+                    <div class="help-text">
+                        <p><strong>High Quality:</strong> Best video quality up to 1080p</p>
+                        <p><strong>Balanced:</strong> More reliable audio with decent video quality</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <button type="submit" id="downloadBtn">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </form>
+        
+        <div class="loader" id="loader">
+            <div class="loader-animation"></div>
+            <div class="loader-text">Downloading your media...</div>
+            <div id="loaderInfo" class="help-text" style="text-align: center; margin-top: 15px;">
+                This may take a minute. Please be patient.
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This tool is for personal use only. Please respect copyright laws and content creators.</p>
+        <p>Downloaded content should only be used in accordance with fair use principles.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form elements
+            const downloadForm = document.getElementById('downloadForm');
+            const urlInput = document.getElementById('url');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loader = document.getElementById('loader');
+            const statusMessage = document.getElementById('statusMessage');
+            const videoPreview = document.getElementById('videoPreview');
+            
+            // Format options
+            const audioRadio = document.getElementById('audio');
+            const videoRadio = document.getElementById('video');
+            const audioOption = document.getElementById('audioOption');
+            const videoOption = document.getElementById('videoOption');
+            const videoOptions = document.getElementById('videoOptions');
+            
+            // Quality options
+            const highQualityOption = document.getElementById('highQualityOption');
+            const balancedOption = document.getElementById('balancedOption');
+            const qualityHighRadio = document.getElementById('quality-high');
+            const qualityBalancedRadio = document.getElementById('quality-balanced');
+            
+            // Format selector click handling
+            audioOption.addEventListener('click', function() {
+                audioRadio.checked = true;
+                audioOption.classList.add('active');
+                videoOption.classList.remove('active');
+                videoOptions.style.display = 'none';
+            });
+            
+            videoOption.addEventListener('click', function() {
+                videoRadio.checked = true;
+                videoOption.classList.add('active');
+                audioOption.classList.remove('active');
+                videoOptions.style.display = 'block';
+            });
+            
+            // Quality selector click handling
+            highQualityOption.addEventListener('click', function() {
+                qualityHighRadio.checked = true;
+                highQualityOption.classList.add('active');
+                balancedOption.classList.remove('active');
+            });
+            
+            balancedOption.addEventListener('click', function() {
+                qualityBalancedRadio.checked = true;
+                balancedOption.classList.add('active');
+                highQualityOption.classList.remove('active');
+            });
+            
+            // Check URL and show preview when URL changes
+            urlInput.addEventListener('input', debounce(checkUrl, 800));
+            
+            // Handle form submission
+            downloadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                downloadMedia();
+            });
+            
+            // Helper function to debounce URL checks
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+            
+            // Function to display status messages
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status-message';
+                statusMessage.classList.add('status-' + type);
+                statusMessage.style.display = 'block';
+                
+                // Auto-hide success messages after 5 seconds
+                if (type === 'success') {
+                    setTimeout(() => {
+                        statusMessage.style.display = 'none';
+                    }, 5000);
+                }
+            }
+            
+            // Function to hide status messages
+            function hideStatus() {
+                statusMessage.style.display = 'none';
+            }
+            
+            // Function to check URL and show preview
+            function checkUrl() {
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    videoPreview.style.display = 'none';
+                    return;
+                }
+                
+                if (!isValidUrl(url)) {
+                    showStatus('Please enter a valid URL from YouTube, SoundCloud, or Vimeo', 'error');
+                    return;
+                }
+                
+                hideStatus();
+                
+                // Show loading state for preview
+                downloadBtn.disabled = true;
+                downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+                
+                // Send URL to server for validation
+                const formData = new FormData();
+                formData.append('url', url);
+                
+                fetch('/check', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        showStatus(data.message, 'error');
+                        videoPreview.style.display = 'none';
+                    } else {
+                        hideStatus();
+                        
+                        // Update preview
+                        document.getElementById('videoTitle').textContent = data.title;
+                        
+                        // Format duration
+                        let duration = '';
+                        if (data.duration) {
+                            const minutes = Math.floor(data.duration / 60);
+                            const seconds = data.duration % 60;
+                            duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        }
+                        
+                        document.getElementById('videoInfo').textContent = duration ? `Duration: ${duration}` : '';
+                        
+                        // Set thumbnail if available
+                        if (data.thumbnail) {
+                            document.getElementById('thumbnailImg').src = data.thumbnail;
+                        } else {
+                            document.getElementById('thumbnailImg').src = '/api/placeholder/120/67';
+                        }
+                        
+                        videoPreview.style.display = 'block';
+                    }
+                    
+                    // Re-enable download button
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showStatus('Error checking URL. Please try again.', 'error');
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+                });
+            }
+            
+            // Function to check if URL is valid format
+            function isValidUrl(url) {
+                try {
+                    const parsedUrl = new URL(url);
+                    const domain = parsedUrl.hostname.toLowerCase();
+                    const validDomains = [
+                        'youtube.com', 
+                        'youtu.be', 
+                        'www.youtube.com',
+                        'soundcloud.com',
+                        'www.soundcloud.com',
+                        'vimeo.com',
+                        'www.vimeo.com'
+                    ];
+                    
+                    return validDomains.some(d => domain.endsWith(d));
+                } catch (e) {
+                    return false;
+                }
+            }
+            
+            // Function to start download
+            function downloadMedia() {
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    showStatus('Please enter a valid URL', 'error');
+                    return;
+                }
+                
+                // Hide any previous status messages
+                hideStatus();
+                
+                // Show loading animation
+                downloadForm.style.display = 'none';
+                loader.style.display = 'block';
+                
+                // Track download time for user feedback
+                const startTime = new Date().getTime();
+                const timeoutDelay = 120000; // 2 minutes
+                
+                // Set timeout for long downloads
+                const timeoutId = setTimeout(function() {
+                    document.getElementById('loaderInfo').innerHTML = 
+                        '<p style="color: #cc0000;">This download is taking longer than expected. Please continue waiting...</p>' +
+                        '<p>Some videos may take several minutes to process.</p>';
+                }, timeoutDelay);
+                
+                // Create a form to submit for download
+                const submitForm = document.createElement('form');
+                submitForm.method = 'POST';
+                submitForm.action = '/download';
+                
+                // Add URL
+                const urlField = document.createElement('input');
+                urlField.type = 'hidden';
+                urlField.name = 'url';
+                urlField.value = url;
+                submitForm.appendChild(urlField);
+                
+                // Add format
+                const formatField = document.createElement('input');
+                formatField.type = 'hidden';
+                formatField.name = 'format';
+                formatField.value = audioRadio.checked ? 'audio' : 'video';
+                submitForm.appendChild(formatField);
+                
+                // Add quality if video
+                if (videoRadio.checked) {
+                    const qualityField = document.createElement('input');
+                    qualityField.type = 'hidden';
+                    qualityField.name = 'quality';
+                    qualityField.value = qualityHighRadio.checked ? 'high' : 'balanced';
+                    submitForm.appendChild(qualityField);
+                }
+                
+                // Submit the form
+                document.body.appendChild(submitForm);
+                submitForm.submit();
+                
+                // Handle return from download
+                window.addEventListener('focus', function onFocus() {
+                    // Clear timeout
+                    clearTimeout(timeoutId);
+                    
+                    // Calculate elapsed time
+                    const elapsed = (new Date().getTime() - startTime) / 1000;
+                    
+                    // Only show return UI if it's been more than 3 seconds
+                    // (to avoid flicker if download is instant)
+                    if (elapsed > 3) {
+                        // Hide loader
+                        loader.style.display = 'none';
+                        downloadForm.style.display = 'block';
+                        
+                        // Show success message
+                        showStatus('Download completed successfully!', 'success');
+                    }
+                    
+                    // Remove this event listener
+                    window.removeEventListener('focus', onFocus);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
